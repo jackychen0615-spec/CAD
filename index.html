@@ -3,7 +3,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>PackCAD PRO | 專業包裝刀模生成系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
 <script type="importmap">
@@ -18,8 +18,21 @@
   }
 }
 </script>
+<style>
+  /* 禁用 iOS Safari 的橡皮筋回彈效果，優化 3D 體驗 */
+  html, body {
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+  #root {
+    width: 100%;
+    height: 100%;
+  }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

@@ -56,7 +56,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#f8fafc] h-screen flex flex-col font-sans text-slate-900 overflow-hidden">
+    <div className="bg-[#f8fafc] h-[100dvh] flex flex-col font-sans text-slate-900 overflow-hidden">
       {/* 導覽列 */}
       <nav className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 flex justify-between items-center shrink-0 z-[100] shadow-sm">
         <div className="flex items-center gap-3">
@@ -67,14 +67,14 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-           <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
+           <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 scale-90 sm:scale-100">
               <button 
                 onClick={() => setViewMode('2D')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${viewMode === '2D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '2D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}
               >2D</button>
               <button 
                 onClick={() => setViewMode('3D')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${viewMode === '3D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '3D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}
               >3D</button>
            </div>
            <button 
@@ -83,15 +83,15 @@ const App: React.FC = () => {
             className="bg-slate-800 text-white px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95 disabled:opacity-50"
            >
             {isExporting ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth="2" /></svg>}
-            <span className="hidden sm:inline">DXF 導出</span>
+            <span className="hidden sm:inline">DXF</span>
            </button>
         </div>
       </nav>
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        {/* 控制面板：在手機端為可折疊的頂部區域或固定比例區域 */}
-        <aside className="w-full lg:w-80 bg-white border-b lg:border-r border-slate-200 overflow-y-auto max-h-[40vh] lg:max-h-full lg:h-full z-40 shrink-0 shadow-xl lg:shadow-none">
-          <div className="p-4 sm:p-6 space-y-5">
+        {/* 控制面板 */}
+        <aside className="w-full lg:w-80 bg-white border-b lg:border-r border-slate-200 overflow-y-auto max-h-[40vh] lg:max-h-full lg:h-full z-40 shrink-0 flex flex-col shadow-lg lg:shadow-none">
+          <div className="p-4 sm:p-6 space-y-4 flex-1">
             <ControlPanel params={params} onChange={setParams} />
             
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
@@ -100,16 +100,41 @@ const App: React.FC = () => {
             </div>
 
             {warnings.length > 0 && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <p className="text-[10px] text-amber-700 font-bold uppercase mb-1">結構警告</p>
-                {warnings.map((w, i) => <p key={i} className="text-[11px] text-amber-800 leading-tight">• {w}</p>)}
+              <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl">
+                {warnings.map((w, i) => <p key={i} className="text-[10px] text-amber-800 leading-tight">• {w}</p>)}
               </div>
             )}
           </div>
+
+          {/* 專業頁尾 */}
+          <footer className="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
+             <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Version 3.5.2</span>
+                <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-bold">RWA Ready</span>
+             </div>
+             <p className="text-[10px] text-slate-400 font-medium">© 2025 Structural Engineering Lab.</p>
+          </footer>
         </aside>
 
-        {/* 畫布視圖區域：在手機端佔據剩餘 60% 空間 */}
+        {/* 畫布視圖區域 */}
         <section className="flex-1 relative bg-[#f1f5f9] overflow-hidden flex flex-col">
+          {/* 3D 模式下的頂部控制桿 (避免被底部 Safari 地址列擋住) */}
+          {viewMode === '3D' && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/70 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/50 shadow-xl z-[60] ring-1 ring-black/5">
+              <div className="flex justify-between items-center mb-1.5 px-1">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">展開</span>
+                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter">折疊模擬控制</span>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">成型</span>
+              </div>
+              <input 
+                type="range" min="0" max="1" step="0.001" 
+                value={foldAmount} 
+                onChange={(e) => setFoldAmount(parseFloat(e.target.value))}
+                className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+              />
+            </div>
+          )}
+
           <div className="flex-1 relative">
             {viewMode === '2D' ? (
               <div className="w-full h-full p-4 sm:p-12 overflow-auto flex items-center justify-center">
@@ -122,33 +147,20 @@ const App: React.FC = () => {
               <div className="w-full h-full touch-none relative">
                 <ThreeDViewer key={resetKey} params={params} foldAmount={foldAmount} />
                 
+                {/* 重置視角按鈕移至右下方 (躲開上方控制桿) */}
                 <button 
                   onClick={() => setResetKey(k => k + 1)}
-                  className="absolute top-4 right-4 bg-white/90 p-2.5 rounded-full shadow-lg border border-slate-200 text-slate-500 z-50 hover:bg-white"
+                  className="absolute bottom-6 right-6 bg-indigo-600 p-3 rounded-full shadow-lg border border-indigo-500 text-white z-50 hover:bg-indigo-700 active:scale-95 transition-all"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </button>
-
-                {/* 行動端折疊控制器優化：懸浮於底部 */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[85%] max-w-sm bg-white/80 backdrop-blur-xl p-4 rounded-3xl border border-white/50 shadow-2xl z-50 ring-1 ring-black/5">
-                  <div className="flex justify-between items-center mb-2 px-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">展開</span>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">折疊模擬</span>
-                  </div>
-                  <input 
-                    type="range" min="0" max="1" step="0.001" 
-                    value={foldAmount} 
-                    onChange={(e) => setFoldAmount(parseFloat(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
-                  />
-                </div>
               </div>
             )}
             
             {/* 2D 模式圖例 */}
             {viewMode === '2D' && (
               <div className="absolute top-4 left-4 flex gap-3 text-[10px] font-bold text-slate-600 bg-white/90 backdrop-blur px-3 py-2 rounded-xl border border-slate-200 z-30 shadow-sm">
-                 <span className="flex items-center gap-1.5"><div className="w-2.5 h-0.5 bg-red-500 rounded-full"></div> 裁切線</span>
+                 <span className="flex items-center gap-1.5"><div className="w-2.5 h-0.5 bg-red-500 rounded-full"></div> 裁切</span>
                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-0.5 border-t-2 border-dashed border-blue-500"></div> 折線</span>
               </div>
             )}
