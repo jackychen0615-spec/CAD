@@ -16,64 +16,151 @@ export const ThreeDViewer: React.FC<Props> = ({ params, foldAmount }) => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Initialize Scene
+    // 1. Scene Setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf1f5f9);
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(50, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 2000);
-    camera.position.set(params.w, params.h * 2, params.d * 3);
+    const camera = new THREE.PerspectiveCamera(50, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 5000);
+    camera.position.set(params.w * 1.5, params.h * 2, params.d * 2.5);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(500, 500, 500);
-    scene.add(directionalLight);
+    // 2. Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const pointLight = new THREE.PointLight(0xffffff, 0.8);
+    pointLight.position.set(500, 500, 500);
+    scene.add(pointLight);
 
-    // Box Geometry Creation (Simplified for common box types)
-    const material = new THREE.MeshPhongMaterial({ 
+    // 3. Materials
+    const cardMaterial = new THREE.MeshPhongMaterial({ 
       color: 0xffffff, 
       side: THREE.DoubleSide,
-      flatShading: true
+      flatShading: true,
+      shininess: 10
     });
+    
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xcccccc });
 
     const boxGroup = new THREE.Group();
     scene.add(boxGroup);
 
+    // 4. Geometry Logic based on BoxType
     const { w, d, h } = params;
+    const f = foldAmount * (Math.PI / 2); // 90 degree fold
 
-    // Create panels
-    const panels = [
-      { size: [w, d], pos: [0, 0, 0], rot: [Math.PI / 2, 0, 0], label: 'Bottom' },
-      { size: [w, h], pos: [0, h/2, -d/2], rot: [0, 0, 0], label: 'Back' },
-      { size: [w, h], pos: [0, h/2, d/2], rot: [0, 0, 0], label: 'Front' },
-      { size: [h, d], pos: [-w/2, h/2, 0], rot: [0, Math.PI / 2, 0], label: 'Left' },
-      { size: [h, d], pos: [w/2, h/2, 0], rot: [0, Math.PI / 2, 0], label: 'Right' },
-      { size: [w, d], pos: [0, h, -d/2], rot: [Math.PI / 2, 0, 0], label: 'Top' },
-    ];
+    const createPanel = (width: number, height: number, color?: number) => {
+      const group = new THREE.Group();
+      const geometry = new THREE.PlaneGeometry(width, height);
+      // Offset geometry to make rotation happen at edge (pivot)
+      geometry.translate(width / 2, height / 2, 0);
+      const mesh = new THREE.Mesh(geometry, color ? new THREE.MeshPhongMaterial({color, side: THREE.DoubleSide}) : cardMaterial);
+      group.add(mesh);
 
-    panels.forEach(p => {
-      const geo = new THREE.PlaneGeometry(p.size[0], p.size[1]);
-      const mesh = new THREE.Mesh(geo, material);
+      // Add edge lines
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, edgeMaterial);
+      group.add(line);
       
-      // Basic folding simulation logic: Interpolate position based on foldAmount
-      const targetPos = new THREE.Vector3(p.pos[0], p.pos[1], p.pos[2]);
-      const startPos = new THREE.Vector3(p.pos[0] * 2, 0, p.pos[2] * 2);
-      mesh.position.copy(startPos.lerp(targetPos, foldAmount));
-      
-      mesh.rotation.set(p.rot[0] * foldAmount, p.rot[1] * foldAmount, p.rot[2] * foldAmount);
-      boxGroup.add(mesh);
-    });
+      return group;
+    };
 
+    if (params.type === BoxType.MAILER) {
+      // Mailer Box: T-Shape Folding
+      const bottom = createPanel(w, d);
+      bottom.position.set(-w/2, 0, -d/2);
+      bottom.rotation.x = -Math.PI / 2;
+      boxGroup.add(bottom);
+
+      // Back wall & Top
+      const back = createPanel(w, h);
+      back.position.set(0, d, 0); // Relative to bottom
+      back.rotation.x = f;
+      bottom.add(back);
+
+      const top = createPanel(w, d);
+      top.position.set(0, h, 0);
+      top.rotation.x = f;
+      back.add(top);
+
+      const flap = createPanel(w, 20);
+      flap.position.set(0, d, 0);
+      flap.rotation.x = f;
+      top.add(flap);
+
+      // Front wall
+      const front = createPanel(w, h);
+      front.position.set(0, 0, 0);
+      front.rotation.x = -f;
+      bottom.add(front);
+
+      // Sides
+      const sideL = createPanel(h, d);
+      sideL.position.set(0, 0, 0);
+      sideL.rotation.y = f;
+      bottom.add(sideL);
+
+      const sideR = createPanel(h, d);
+      sideR.position.set(w, 0, 0);
+      sideR.rotation.y = -f;
+      bottom.add(sideR);
+
+    } else if (params.type === BoxType.TELESCOPE) {
+      // Telescope Box (Two parts: Base and Lid)
+      const buildTray = (tw: number, td: number, th: number, offsetY: number) => {
+        const tray = new THREE.Group();
+        const base = createPanel(tw, td);
+        base.position.set(-tw/2, offsetY, -td/2);
+        base.rotation.x = -Math.PI / 2;
+        tray.add(base);
+
+        const sides = [
+          {w: tw, h: th, pos: [0,0,0], rot: [-f,0,0]},
+          {w: tw, h: th, pos: [0,td,0], rot: [f,0,0]},
+          {w: th, h: td, pos: [0,0,0], rot: [0,f,0]},
+          {w: th, h: td, pos: [tw,0,0], rot: [0,-f,0]},
+        ];
+
+        sides.forEach(s => {
+          const p = createPanel(s.w, s.h);
+          p.position.set(s.pos[0], s.pos[1], 0);
+          p.rotation.set(s.rot[0], s.rot[1], 0);
+          base.add(p);
+        });
+        return tray;
+      };
+
+      boxGroup.add(buildTray(w, d, h, 0));
+      boxGroup.add(buildTray(w+5, d+5, h/2, h + 20 * (1 - foldAmount))); // Lid moves up when unfolding
+
+    } else {
+      // Default: Tube-style (Tuck End / Glue Bottom)
+      const p1 = createPanel(w, h); p1.position.set(-w, 0, d/2);
+      boxGroup.add(p1);
+      
+      const p2 = createPanel(d, h); p2.position.set(w, 0, 0); p2.rotation.y = f;
+      p1.add(p2);
+      
+      const p3 = createPanel(w, h); p3.position.set(d, 0, 0); p3.rotation.y = f;
+      p2.add(p3);
+      
+      const p4 = createPanel(d, h); p4.position.set(w, 0, 0); p4.rotation.y = f;
+      p3.add(p4);
+
+      // Top Lid
+      const lid = createPanel(w, d); lid.position.set(0, h, 0); lid.rotation.x = -f;
+      p1.add(lid);
+    }
+
+    // 5. Animation Loop
+    let frame = 0;
     const animate = () => {
-      requestAnimationFrame(animate);
+      frame = requestAnimationFrame(animate);
       boxGroup.rotation.y += 0.005;
       renderer.render(scene, camera);
     };
@@ -89,6 +176,7 @@ export const ThreeDViewer: React.FC<Props> = ({ params, foldAmount }) => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(frame);
       renderer.dispose();
       if (containerRef.current) containerRef.current.removeChild(renderer.domElement);
     };
