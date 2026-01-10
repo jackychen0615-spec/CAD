@@ -1,0 +1,5 @@
+{
+  "name": "CAD Packaging Box Generator",
+  "description": "A professional parametric packaging structural design tool that generates production-ready SVG die-lines for Mailer Boxes and Glue-bottom boxes based on precise geometric calculations.",
+  "requestFramePermissions": []
+}
