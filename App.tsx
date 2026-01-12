@@ -5,6 +5,7 @@ import { ControlPanel } from './components/ControlPanel';
 import { GeometryEngine } from './services/geometryEngine';
 import { ThreeDViewer } from './components/ThreeDViewer';
 import { OnboardingModal } from './components/OnboardingModal';
+import { AIConsultant } from './components/AIConsultant';
 
 const App: React.FC = () => {
   const [params, setParams] = useState<BoxParams>({
@@ -21,19 +22,11 @@ const App: React.FC = () => {
   const [material, setMaterial] = useState<'white' | 'kraft' | 'corrugated'>('kraft');
   const [resetKey, setResetKey] = useState(0);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
-  // 當核心幾何參數變動時，強制重置 3D 畫布以防緩存
   useEffect(() => {
     setResetKey(prev => prev + 1);
   }, [params.type, params.w, params.d, params.h, params.t, material]);
-
-  useEffect(() => {
-    const hasSeen = localStorage.getItem('packcad_onboarding');
-    if (!hasSeen) {
-      setIsHelpOpen(true);
-      localStorage.setItem('packcad_onboarding', 'true');
-    }
-  }, []);
 
   const dieLines = useMemo(() => GeometryEngine.generate(params), [params]);
   const svgString = useMemo(() => GeometryEngine.toSVG(dieLines), [dieLines]);
@@ -54,8 +47,7 @@ const App: React.FC = () => {
 
   const handleDownload = (format: 'SVG' | 'DXF') => {
     const content = format === 'SVG' ? svgString : GeometryEngine.toDXF(dieLines);
-    const mime = format === 'SVG' ? 'image/svg+xml' : 'application/dxf';
-    const blob = new Blob([content], { type: mime });
+    const blob = new Blob([content], { type: format === 'SVG' ? 'image/svg+xml' : 'application/dxf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -65,7 +57,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#f8fafc] h-[100dvh] flex flex-col font-sans text-slate-900 overflow-hidden">
+    <div className="bg-[#f8fafc] h-[100dvh] flex flex-col font-sans text-slate-900 overflow-hidden relative">
       <OnboardingModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
       
       <nav className="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-[100] shadow-sm">
@@ -77,25 +69,32 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-           <button onClick={() => setIsHelpOpen(true)} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+           <button 
+             onClick={() => setShowAI(!showAI)} 
+             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${showAI ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-600 hover:bg-indigo-50'}`}
+           >
+             <span className="relative flex h-2 w-2">
+               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+             </span>
+             AI 顧問
            </button>
            <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
               <button onClick={() => setViewMode('2D')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '2D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>2D</button>
               <button onClick={() => setViewMode('3D')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '3D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>3D</button>
            </div>
-           <button onClick={() => handleDownload('DXF')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95">DXF 導出</button>
+           <button onClick={() => handleDownload('DXF')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95">DXF 導出</button>
         </div>
       </nav>
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        <aside className="w-full lg:w-80 bg-white border-b lg:border-r border-slate-200 overflow-y-auto max-h-[40vh] lg:max-h-full lg:h-full z-40 shrink-0 p-6 space-y-6">
+        <aside className={`w-full lg:w-80 bg-white border-b lg:border-r border-slate-200 overflow-y-auto z-40 shrink-0 p-6 space-y-6 transition-all ${showAI ? 'lg:translate-x-0' : ''}`}>
           <ControlPanel params={params} onChange={setParams} />
           
           <div className="space-y-4">
             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 bg-orange-500 rounded-full"></span>
-              材料預覽
+              材料與預覽
             </h2>
             <div className="grid grid-cols-3 gap-2">
               {(['white', 'kraft', 'corrugated'] as const).map(m => (
@@ -118,12 +117,12 @@ const App: React.FC = () => {
           )}
         </aside>
 
-        <section className="flex-1 relative bg-[#f1f5f9] overflow-hidden flex flex-col">
+        <section className="flex-1 relative bg-[#f1f5f9] overflow-hidden flex flex-col transition-all">
           {viewMode === '3D' && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[85%] max-w-sm bg-white/80 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white shadow-2xl z-[60]">
-              <div className="flex justify-between items-center mb-2 px-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">展開</span>
-                <span className="text-[10px] font-black text-indigo-600 uppercase">成型模擬</span>
+              <div className="flex justify-between items-center mb-2 px-1 text-[10px] font-black uppercase tracking-widest">
+                <span className="text-slate-400">展開</span>
+                <span className="text-indigo-600">成型模擬</span>
               </div>
               <input type="range" min="0" max="1" step="0.001" value={foldAmount} onChange={(e) => setFoldAmount(parseFloat(e.target.value))} className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600" />
             </div>
@@ -141,6 +140,11 @@ const App: React.FC = () => {
             )}
           </div>
         </section>
+
+        {/* AI Sidebar */}
+        <div className={`fixed lg:relative right-0 top-0 bottom-0 z-[150] lg:z-30 w-[320px] lg:w-[350px] p-4 bg-[#f8fafc] transition-transform duration-500 ease-in-out transform ${showAI ? 'translate-x-0' : 'translate-x-full lg:hidden'}`}>
+           <AIConsultant currentParams={params} onUpdateParams={setParams} />
+        </div>
       </main>
     </div>
   );

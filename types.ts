@@ -3,8 +3,10 @@ export enum BoxType {
   MAILER = 'MAILER', 
   GLUE_BOTTOM = 'GLUE_BOTTOM', 
   TUCK_END = 'TUCK_END', 
-  TELESCOPE = 'TELESCOPE', // 天地蓋 (Top and Bottom Box)
-  DRAWER = 'DRAWER' 
+  TELESCOPE = 'TELESCOPE', 
+  DRAWER = 'DRAWER', // 抽屜盒
+  BOOK_STYLE = 'BOOK_STYLE', // 書型盒
+  HANDLE = 'HANDLE' // 手提盒
 }
 
 export interface BoxParams {
