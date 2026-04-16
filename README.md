@@ -1,20 +1,70 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# CAD — 3D Packaging & Box Design Tool
 
-# Run and deploy your AI Studio app
+> A browser-based 3D packaging design tool for creating, visualising, and analysing custom cardboard boxes — powered by React and Google Gemini AI.
 
-This contains everything you need to run your app locally.
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Gemini_AI-4285F4?style=flat-square&logo=google&logoColor=white)
 
-View your app in AI Studio: https://ai.studio/apps/drive/1skE5Y_nZbFNfbxdAMcXOLosBzL3nklX_
+---
 
-## Run Locally
+## Features
 
-**Prerequisites:**  Node.js
+- **2D / 3D Box Viewer** — real-time three-dimensional rendering with fold animation
+- **Multiple Box Types** — Mailer, RSC, and more via a `BoxType` selector
+- **Material Selection** — White, Kraft, and Corrugated options
+- **Geometry Engine** — calculates blank dimensions, panel layout, and fold lines automatically
+- **BCT Estimation** — Box Compression Test strength approximation based on material and dimensions
+- **AI Consultant** — chat interface powered by Google Gemini AI for design guidance
+- **Parameter Controls** — adjust length, width, height, and wall thickness in real time
 
+## Tech Stack
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 18 + Vite |
+| Language | TypeScript |
+| 3D Rendering | Three.js / WebGL via `ThreeDViewer` |
+| AI | Google Gemini AI SDK |
+| Styling | CSS Modules / Tailwind |
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Project Structure
+
+```
+src/
+├── App.tsx               # Root component — wires all panels together
+├── components/
+│   ├── ThreeDViewer      # WebGL 3D box renderer
+│   ├── BoxParams         # Parameter input panel
+│   ├── AIConsultant      # Gemini AI chat sidebar
+│   └── ...
+├── engine/
+│   └── GeometryEngine    # Core geometry & BCT calculation logic
+└── types/
+    └── BoxType           # Box type definitions & constants
+```
+
+## Environment Variables
+
+Create a `.env` file at the project root:
+
+```env
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+## License
+
+MIT
