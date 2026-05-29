@@ -9,6 +9,14 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          genai: ['@google/genai']
+        }
+      }
+    }
   }
 });

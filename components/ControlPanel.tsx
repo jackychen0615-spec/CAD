@@ -7,6 +7,14 @@ interface Props {
   onChange: (params: BoxParams) => void;
 }
 
+const PRESETS = [
+  { name: '手機殼', type: BoxType.MAILER, w: 180, d: 100, h: 30, t: 1.2, g: 15 },
+  { name: '化妝品盒', type: BoxType.TUCK_END, w: 80, d: 60, h: 150, t: 1.0, g: 15 },
+  { name: '鞋盒', type: BoxType.TELESCOPE, w: 330, d: 200, h: 120, t: 2.0, g: 20 },
+  { name: '禮品盒', type: BoxType.BOOK_STYLE, w: 250, d: 200, h: 80, t: 1.5, g: 20 },
+  { name: '飲料提盒', type: BoxType.HANDLE, w: 200, d: 150, h: 250, t: 1.5, g: 20 },
+];
+
 const BOX_DESCRIPTIONS: Record<BoxType, string> = {
   [BoxType.MAILER]: "適用於電商快遞、3C產品包裝。",
   [BoxType.TUCK_END]: "常見於藥盒、化妝品盒。",
@@ -47,7 +55,18 @@ export const ControlPanel: React.FC<Props> = ({ params, onChange }) => {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" strokeWidth="3" /></svg>
           </div>
         </div>
-        <p className="text-[11px] text-slate-500 font-medium pl-1">{BOX_DESCRIPTIONS[params.type]}</p>
+        <p className="text-[11px] text-slate-500 font-medium pl-1 mb-3">{BOX_DESCRIPTIONS[params.type]}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => onChange({ type: preset.type, w: preset.w, d: preset.d, h: preset.h, t: preset.t, g: preset.g })}
+              className="px-3 py-1 rounded-full text-[10px] font-bold bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-all"
+            >
+              {preset.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="px-1">

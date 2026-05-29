@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BoxParams, BoxType, LineType } from './types';
 import { ControlPanel } from './components/ControlPanel';
 import { GeometryEngine } from './services/geometryEngine';
@@ -23,6 +23,46 @@ const App: React.FC = () => {
   const [resetKey, setResetKey] = useState(0);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const BOX_TYPE_NAMES: Record<BoxType, string> = {
+    [BoxType.MAILER]: '飛機盒',
+    [BoxType.TUCK_END]: '上插下扣盒',
+    [BoxType.TELESCOPE]: '天地蓋盒',
+    [BoxType.GLUE_BOTTOM]: '糊底盒',
+    [BoxType.DRAWER]: '抽屜盒',
+    [BoxType.BOOK_STYLE]: '書型盒',
+    [BoxType.HANDLE]: '手提盒',
+  };
+
+  const handleShare = useCallback(async () => {
+    const text = `我用 PackCAD PRO 設計了一個 ${BOX_TYPE_NAMES[params.type]} ${params.w}x${params.d}x${params.h}mm 的包裝盒。免費設計：https://cad.pages.dev`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (_) {
+        // user cancelled or share failed, fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (_) {
+      // clipboard not available
+    }
+  }, [params]);
+
+  const handleScreenshot = useCallback(() => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = `PackCAD_${params.type}_${params.w}x${params.d}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  }, [params]);
 
   useEffect(() => {
     setResetKey(prev => prev + 1);
@@ -83,6 +123,9 @@ const App: React.FC = () => {
               <button onClick={() => setViewMode('2D')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '2D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>2D</button>
               <button onClick={() => setViewMode('3D')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === '3D' ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>3D</button>
            </div>
+           <button onClick={handleShare} className="bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95">{copied ? '已複製！' : '分享設計'}</button>
+           <button onClick={handleScreenshot} className="bg-slate-700 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95">PNG 截圖</button>
+           <button onClick={() => handleDownload('SVG')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95">SVG 導出</button>
            <button onClick={() => handleDownload('DXF')} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95">DXF 導出</button>
         </div>
       </nav>
